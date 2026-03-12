@@ -6,47 +6,98 @@
   <title>AI Scientists Tracker</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
+<!-- ── Header ── -->
 <header>
   <div class="header-inner">
-    <div class="header-title">
-      <span class="header-icon">&#129514;</span>
-      <div>
-        <h1>AI Scientists Tracker</h1>
-        <p class="header-tagline">Mapping the autonomous scientific research landscape</p>
+    <div class="header-left">
+      <div class="header-logo">
+        <span class="logo-icon">&#9883;</span>
+        <div>
+          <h1>AI Scientists</h1>
+          <p class="header-tagline">Mapping the autonomous scientific research landscape</p>
+        </div>
       </div>
+    </div>
+    <div class="header-right">
+      <div class="view-toggle" id="view-toggle">
+        <button class="view-btn active" data-view="map">Map</button>
+        <button class="view-btn" data-view="table">Table</button>
+      </div>
+      <button class="btn-export" id="btn-export">Export CSV</button>
     </div>
   </div>
 </header>
 
 <main>
 
-  <!-- KPI Row -->
-  <section class="kpi-row">
-    <div class="kpi-card">
-      <div class="kpi-value" id="kpi-total">&mdash;</div>
-      <div class="kpi-label">Total Platforms</div>
+  <!-- ── KPI Strip ── -->
+  <section class="kpi-strip">
+    <div class="kpi">
+      <span class="kpi-val" id="kpi-total">&mdash;</span>
+      <span class="kpi-lbl">Platforms</span>
     </div>
-    <div class="kpi-card">
-      <div class="kpi-value" id="kpi-funding">&mdash;</div>
-      <div class="kpi-label">Total Disclosed Funding</div>
+    <div class="kpi-sep"></div>
+    <div class="kpi">
+      <span class="kpi-val accent2" id="kpi-funding">&mdash;</span>
+      <span class="kpi-lbl">Disclosed Funding</span>
     </div>
-    <div class="kpi-card">
-      <div class="kpi-value" id="kpi-fullstack">&mdash;</div>
-      <div class="kpi-label">Full-Stack / Autonomous</div>
+    <div class="kpi-sep"></div>
+    <div class="kpi">
+      <span class="kpi-val accent3" id="kpi-fullstack">&mdash;</span>
+      <span class="kpi-lbl">Full-Stack / Lab</span>
     </div>
-    <div class="kpi-card">
-      <div class="kpi-value" id="kpi-median-year">&mdash;</div>
-      <div class="kpi-label">Median Founded Year</div>
+    <div class="kpi-sep"></div>
+    <div class="kpi">
+      <span class="kpi-val accent4" id="kpi-median-year">&mdash;</span>
+      <span class="kpi-lbl">Median Founded</span>
     </div>
   </section>
 
-  <!-- Charts Row -->
+  <!-- ── Filter Bar ── -->
+  <section class="filter-bar">
+    <input type="text" id="search-input" placeholder="Search companies..." class="search-box" />
+    <div class="filter-chips" id="domain-filters"></div>
+  </section>
+
+  <!-- ── MAP VIEW ── -->
+  <section class="map-view" id="map-view">
+    <!-- Stage column headers -->
+    <div class="map-grid" id="map-grid">
+      <!-- Built by JS -->
+    </div>
+  </section>
+
+  <!-- ── TABLE VIEW ── -->
+  <section class="table-view hidden" id="table-view">
+    <div class="table-meta">
+      <span id="row-count"></span>
+    </div>
+    <div class="table-wrapper">
+      <table id="companies-table">
+        <thead>
+          <tr>
+            <th data-col="name" class="sortable">Company</th>
+            <th data-col="hq" class="sortable">HQ</th>
+            <th data-col="founded" class="sortable">Founded</th>
+            <th data-col="category" class="sortable">Category</th>
+            <th>Domain</th>
+            <th data-col="stage" class="sortable">Stage</th>
+            <th data-col="total_funding_usd_m" class="sortable">Raised ($M)</th>
+            <th>Investors</th>
+          </tr>
+        </thead>
+        <tbody id="table-body"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ── Charts Row ── -->
   <section class="charts-row">
     <div class="chart-card">
       <h3>By Category</h3>
@@ -61,133 +112,74 @@
       <canvas id="chart-domain"></canvas>
     </div>
     <div class="chart-card">
-      <h3>By HQ Region</h3>
+      <h3>By Region</h3>
       <canvas id="chart-region"></canvas>
     </div>
   </section>
 
-  <!-- Capability Landscape Matrix -->
-  <section class="capability-section">
-    <div class="section-header">
-      <h2>Capability Landscape</h2>
-      <p class="section-subtitle">Which companies cover which parts of the research lifecycle</p>
+  <!-- ── Capability Matrix ── -->
+  <section class="section-block">
+    <div class="section-hdr">
+      <h2>Research Lifecycle Coverage</h2>
+      <p class="section-sub">Which companies cover which stages of autonomous research</p>
     </div>
-    <div class="capability-wrapper">
-      <table class="capability-table" id="capability-table"></table>
+    <div class="cap-wrapper">
+      <table class="cap-table" id="capability-table"></table>
     </div>
   </section>
 
-  <!-- Funding Timeline -->
-  <section class="funding-section">
-    <div class="section-header">
-      <h2>Funding Timeline</h2>
-      <p class="section-subtitle">Major funding rounds in the AI scientist space</p>
+  <!-- ── Largest Rounds ── -->
+  <section class="section-block">
+    <div class="section-hdr">
+      <h2>Largest Rounds</h2>
+      <p class="section-sub">Top funding events in autonomous scientific AI</p>
     </div>
-    <div class="funding-timeline" id="funding-timeline"></div>
+    <div class="rounds-list" id="rounds-list"></div>
   </section>
 
-  <!-- Key Milestones -->
-  <section class="milestones-section">
-    <div class="section-header">
+  <!-- ── Key Milestones ── -->
+  <section class="section-block">
+    <div class="section-hdr">
       <h2>Key Milestones</h2>
-      <p class="section-subtitle">Landmark events in autonomous scientific research</p>
+      <p class="section-sub">Landmark events in autonomous scientific research</p>
     </div>
-    <div class="milestones-timeline" id="milestones-timeline"></div>
+    <div class="milestones-list" id="milestones-list"></div>
   </section>
 
-  <!-- Filters -->
-  <section class="filters-bar">
-    <div class="filter-group">
-      <label>Search</label>
-      <input type="text" id="search-input" placeholder="Company, domain, approach..." />
-    </div>
-    <div class="filter-group">
-      <label>Category</label>
-      <select id="filter-category">
-        <option value="">All</option>
-      </select>
-    </div>
-    <div class="filter-group">
-      <label>Domain</label>
-      <select id="filter-domain">
-        <option value="">All</option>
-      </select>
-    </div>
-    <div class="filter-group">
-      <label>Stage</label>
-      <select id="filter-stage">
-        <option value="">All</option>
-      </select>
-    </div>
-    <div class="filter-group">
-      <button id="btn-reset">Reset Filters</button>
-    </div>
-    <div class="filter-group filter-right">
-      <button id="btn-export">Export CSV</button>
-    </div>
-  </section>
-
-  <!-- Table -->
-  <section class="table-section">
-    <div class="table-meta">
-      <span id="row-count">Showing &mdash; companies</span>
-    </div>
-    <div class="table-wrapper">
-      <table id="companies-table">
-        <thead>
-          <tr>
-            <th data-col="name" class="sortable">Company <span class="sort-icon">&#8597;</span></th>
-            <th data-col="hq" class="sortable">HQ <span class="sort-icon">&#8597;</span></th>
-            <th data-col="founded" class="sortable">Founded <span class="sort-icon">&#8597;</span></th>
-            <th data-col="category" class="sortable">Category <span class="sort-icon">&#8597;</span></th>
-            <th data-col="domain">Domain</th>
-            <th data-col="stage" class="sortable">Stage <span class="sort-icon">&#8597;</span></th>
-            <th data-col="total_funding_usd_m" class="sortable">Total Raised ($M) <span class="sort-icon">&#8597;</span></th>
-            <th data-col="key_investors">Key Investors</th>
-            <th>Notes</th>
-          </tr>
-        </thead>
-        <tbody id="table-body"></tbody>
-      </table>
-    </div>
-  </section>
-
-  <!-- Disclaimer -->
-  <div class="disclaimer-banner">
-    <span class="disclaimer-icon">&#9888;</span>
-    <span><strong>Disclaimer:</strong> Data is compiled from public sources including company websites,
-    press releases, and news coverage. Funding amounts reflect publicly disclosed figures
-    and may not capture all rounds. This tracker is for informational purposes only and should not be used
-    as the basis for investment decisions. Last updated: <span id="disclaimer-date"></span>.</span>
+  <!-- ── Disclaimer ── -->
+  <div class="disclaimer">
+    Data compiled from public sources. Funding figures reflect disclosed amounts and may be incomplete.
+    For informational purposes only. Last updated: <span id="disclaimer-date"></span>.
   </div>
 
 </main>
 
 <footer>
   <div class="footer-inner">
-    <div class="footer-brand">
-      <span class="footer-icon">&#129514;</span>
-      <div>
-        <div class="footer-title">AI Scientists Tracker</div>
-        <div class="footer-tagline">Mapping autonomous scientific research</div>
-      </div>
+    <div class="footer-left">
+      <span class="logo-icon sm">&#9883;</span>
+      <span class="footer-brand">AI Scientists Tracker</span>
     </div>
-    <div class="footer-status">
+    <div class="footer-center">
       <span class="pulse-dot"></span>
-      <span class="footer-status-text">Data current as of <span id="footer-date">&mdash;</span></span>
+      <span>Updated <span id="footer-date">&mdash;</span></span>
     </div>
-    <div class="footer-meta">
-      <div class="footer-built">Built by <strong>Matt Margolis</strong></div>
-      <div class="footer-links">
-        <a href="https://www.linkedin.com/in/matthew-margolis-93884599/" target="_blank" rel="noopener">LinkedIn</a>
-        <span class="footer-sep">&middot;</span>
-        <a href="https://github.com/mattmargolis" target="_blank" rel="noopener">GitHub</a>
-      </div>
+    <div class="footer-right">
+      Built by <strong>Matt Margolis</strong>
+      &nbsp;&middot;&nbsp;
+      <a href="https://www.linkedin.com/in/matthew-margolis-93884599/" target="_blank" rel="noopener">LinkedIn</a>
+      &middot;
+      <a href="https://github.com/mattmargolis" target="_blank" rel="noopener">GitHub</a>
     </div>
   </div>
 </footer>
 
-<!-- Detail Modal -->
+<!-- ── Detail Popover (positioned absolutely by JS) ── -->
+<div id="popover" class="popover hidden">
+  <div id="popover-content"></div>
+</div>
+
+<!-- ── Detail Modal (for table row click) ── -->
 <div id="modal-overlay" class="modal-overlay hidden">
   <div class="modal">
     <button class="modal-close" id="modal-close">&times;</button>
