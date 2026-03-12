@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Scientists Tracker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="header-title">
+      <span class="header-icon">&#129514;</span>
+      <div>
+        <h1>AI Scientists Tracker</h1>
+        <p class="header-tagline">Mapping the autonomous scientific research landscape</p>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main>
+
+  <!-- KPI Row -->
+  <section class="kpi-row">
+    <div class="kpi-card">
+      <div class="kpi-value" id="kpi-total">&mdash;</div>
+      <div class="kpi-label">Total Platforms</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-value" id="kpi-funding">&mdash;</div>
+      <div class="kpi-label">Total Disclosed Funding</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-value" id="kpi-fullstack">&mdash;</div>
+      <div class="kpi-label">Full-Stack / Autonomous</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-value" id="kpi-median-year">&mdash;</div>
+      <div class="kpi-label">Median Founded Year</div>
+    </div>
+  </section>
+
+  <!-- Charts Row -->
+  <section class="charts-row">
+    <div class="chart-card">
+      <h3>By Category</h3>
+      <canvas id="chart-category"></canvas>
+    </div>
+    <div class="chart-card">
+      <h3>By Funding Stage</h3>
+      <canvas id="chart-stage"></canvas>
+    </div>
+    <div class="chart-card">
+      <h3>By Domain</h3>
+      <canvas id="chart-domain"></canvas>
+    </div>
+    <div class="chart-card">
+      <h3>By HQ Region</h3>
+      <canvas id="chart-region"></canvas>
+    </div>
+  </section>
+
+  <!-- Capability Landscape Matrix -->
+  <section class="capability-section">
+    <div class="section-header">
+      <h2>Capability Landscape</h2>
+      <p class="section-subtitle">Which companies cover which parts of the research lifecycle</p>
+    </div>
+    <div class="capability-wrapper">
+      <table class="capability-table" id="capability-table"></table>
+    </div>
+  </section>
+
+  <!-- Funding Timeline -->
+  <section class="funding-section">
+    <div class="section-header">
+      <h2>Funding Timeline</h2>
+      <p class="section-subtitle">Major funding rounds in the AI scientist space</p>
+    </div>
+    <div class="funding-timeline" id="funding-timeline"></div>
+  </section>
+
+  <!-- Key Milestones -->
+  <section class="milestones-section">
+    <div class="section-header">
+      <h2>Key Milestones</h2>
+      <p class="section-subtitle">Landmark events in autonomous scientific research</p>
+    </div>
+    <div class="milestones-timeline" id="milestones-timeline"></div>
+  </section>
+
+  <!-- Filters -->
+  <section class="filters-bar">
+    <div class="filter-group">
+      <label>Search</label>
+      <input type="text" id="search-input" placeholder="Company, domain, approach..." />
+    </div>
+    <div class="filter-group">
+      <label>Category</label>
+      <select id="filter-category">
+        <option value="">All</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>Domain</label>
+      <select id="filter-domain">
+        <option value="">All</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>Stage</label>
+      <select id="filter-stage">
+        <option value="">All</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <button id="btn-reset">Reset Filters</button>
+    </div>
+    <div class="filter-group filter-right">
+      <button id="btn-export">Export CSV</button>
+    </div>
+  </section>
+
+  <!-- Table -->
+  <section class="table-section">
+    <div class="table-meta">
+      <span id="row-count">Showing &mdash; companies</span>
+    </div>
+    <div class="table-wrapper">
+      <table id="companies-table">
+        <thead>
+          <tr>
+            <th data-col="name" class="sortable">Company <span class="sort-icon">&#8597;</span></th>
+            <th data-col="hq" class="sortable">HQ <span class="sort-icon">&#8597;</span></th>
+            <th data-col="founded" class="sortable">Founded <span class="sort-icon">&#8597;</span></th>
+            <th data-col="category" class="sortable">Category <span class="sort-icon">&#8597;</span></th>
+            <th data-col="domain">Domain</th>
+            <th data-col="stage" class="sortable">Stage <span class="sort-icon">&#8597;</span></th>
+            <th data-col="total_funding_usd_m" class="sortable">Total Raised ($M) <span class="sort-icon">&#8597;</span></th>
+            <th data-col="key_investors">Key Investors</th>
+            <th>Notes</th>
+          </tr>
+        </thead>
+        <tbody id="table-body"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- Disclaimer -->
+  <div class="disclaimer-banner">
+    <span class="disclaimer-icon">&#9888;</span>
+    <span><strong>Disclaimer:</strong> Data is compiled from public sources including company websites,
+    press releases, and news coverage. Funding amounts reflect publicly disclosed figures
+    and may not capture all rounds. This tracker is for informational purposes only and should not be used
+    as the basis for investment decisions. Last updated: <span id="disclaimer-date"></span>.</span>
+  </div>
+
+</main>
+
+<footer>
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <span class="footer-icon">&#129514;</span>
+      <div>
+        <div class="footer-title">AI Scientists Tracker</div>
+        <div class="footer-tagline">Mapping autonomous scientific research</div>
+      </div>
+    </div>
+    <div class="footer-status">
+      <span class="pulse-dot"></span>
+      <span class="footer-status-text">Data current as of <span id="footer-date">&mdash;</span></span>
+    </div>
+    <div class="footer-meta">
+      <div class="footer-built">Built by <strong>Matt Margolis</strong></div>
+      <div class="footer-links">
+        <a href="https://www.linkedin.com/in/matthew-margolis-93884599/" target="_blank" rel="noopener">LinkedIn</a>
+        <span class="footer-sep">&middot;</span>
+        <a href="https://github.com/mattmargolis" target="_blank" rel="noopener">GitHub</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<!-- Detail Modal -->
+<div id="modal-overlay" class="modal-overlay hidden">
+  <div class="modal">
+    <button class="modal-close" id="modal-close">&times;</button>
+    <div id="modal-content"></div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
