@@ -649,13 +649,13 @@ function renderRounds(data) {
 
 const MILESTONES = [
   { date: 'Jan 2026', text: '<strong>Sakana AI</strong> receives Google strategic investment, valuation hits $2.65B' },
-  { date: 'Nov 2025', text: '<strong>Edison Scientific</strong> spins out of FutureHouse with $70M seed round' },
+  { date: 'Nov 2025', text: '<strong>Edison Scientific</strong> (formerly FutureHouse) raises $70M seed round' },
   { date: 'Sep 2025', text: '<strong>Periodic Labs</strong> raises record $300M seed — largest for autonomous lab startup' },
   { date: 'Mar 2025', text: '<strong>Lila Sciences</strong> unveiled by Flagship Pioneering with $200M seed' },
   { date: 'Mar 2025', text: 'First fully AI-generated research paper accepted at a major ML conference' },
   { date: 'Aug 2024', text: '<strong>Sakana AI</strong> publishes "The AI Scientist" — first automated paper generation system' },
   { date: 'Aug 2024', text: '<strong>Recursion</strong> acquires Exscientia for ~$688M; partners with NVIDIA on BioNeMo' },
-  { date: 'Jan 2023', text: '<strong>FutureHouse</strong> founded by Eric Schmidt to build open-source AI research tools' },
+  { date: 'Jan 2023', text: '<strong>FutureHouse</strong> (now Edison Scientific) founded by Eric Schmidt to build open-source AI research tools' },
 ];
 
 function renderMilestones() {
