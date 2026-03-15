@@ -12,11 +12,11 @@ let activeDomain = '';
 // ── Category config ─────────────────────────────────────────────────────────
 
 const CATEGORIES = [
-  { key: 'Full-Stack AI Scientist', label: 'Full-Stack AI Scientist', chip: 'chip-fullstack', tag: 'tag-fullstack', color: '#818cf8', dotColor: '#6366f1' },
-  { key: 'AI Research Agent',       label: 'AI Research Agent',       chip: 'chip-agent',     tag: 'tag-agent',     color: '#22d3ee', dotColor: '#22d3ee' },
-  { key: 'AI Drug Discovery',       label: 'AI Drug Discovery',       chip: 'chip-drug',      tag: 'tag-drug',      color: '#34d399', dotColor: '#34d399' },
-  { key: 'Autonomous Lab',          label: 'Autonomous Lab',          chip: 'chip-lab',       tag: 'tag-lab',       color: '#fbbf24', dotColor: '#fbbf24' },
-  { key: 'DeSci / Open Science',    label: 'DeSci / Open Science',    chip: 'chip-desci',     tag: 'tag-desci',     color: '#c084fc', dotColor: '#c084fc' },
+  { key: 'Full-Stack AI Scientist', label: 'Full-Stack AI Scientist', chip: 'chip-fullstack', tag: 'tag-fullstack', color: '#6b8cce', dotColor: '#6b8cce' },
+  { key: 'AI Research Agent',       label: 'AI Research Agent',       chip: 'chip-agent',     tag: 'tag-agent',     color: '#4ecdc4', dotColor: '#4ecdc4' },
+  { key: 'AI Drug Discovery',       label: 'AI Drug Discovery',       chip: 'chip-drug',      tag: 'tag-drug',      color: '#e8a44a', dotColor: '#e8a44a' },
+  { key: 'Autonomous Lab',          label: 'Autonomous Lab',          chip: 'chip-lab',       tag: 'tag-lab',       color: '#d4a843', dotColor: '#d4a843' },
+  { key: 'DeSci / Open Science',    label: 'DeSci / Open Science',    chip: 'chip-desci',     tag: 'tag-desci',     color: '#b8a0d6', dotColor: '#b8a0d6' },
 ];
 
 const CAT_MAP = {};
@@ -26,7 +26,7 @@ CATEGORIES.forEach(c => { CAT_MAP[c.key] = c; });
 const STAGE_BUCKETS = [
   { label: 'Pre-seed / Seed', stages: ['Pre-seed', 'Seed'] },
   { label: 'Series A',        stages: ['Series A'] },
-  { label: 'Series B+ / Public', stages: ['Series B', 'Series C+', 'Public'] },
+  { label: 'Series B+ / Public', stages: ['Series B', 'Series C', 'Series C+', 'Public', 'Acquired'] },
   { label: 'Nonprofit',       stages: ['Nonprofit'] },
 ];
 
@@ -41,7 +41,8 @@ function fmtMoney(v) {
 function hqRegion(hq) {
   if (!hq) return 'Other';
   const l = hq.toLowerCase();
-  if (l.includes('japan') || l.includes('tokyo') || l.includes('india')) return 'Asia';
+  if (l.includes('japan') || l.includes('tokyo') || l.includes('india') || l.includes('hong kong') || l.includes('china') || l.includes('shenzhen')) return 'Asia';
+  if (l.includes('uk') || l.includes('oxford') || l.includes('london') || l.includes('glasgow') || l.includes('switzerland') || l.includes('basel')) return 'Europe';
   if (l.includes('decentralized')) return 'Decentralized';
   const us = [', ca', ', ma', ', ny', ', tx', ', ct', ', ut', ', wa', ', pa', ', nj'];
   if (us.some(s => l.endsWith(s))) return 'USA';
@@ -53,22 +54,63 @@ function catTag(category) {
   return c ? `<span class="tag ${c.tag}">${category}</span>` : `<span class="tag tag-other">${category || '—'}</span>`;
 }
 
+// ── Count-up Animation ──────────────────────────────────────────────────────
+
+function animateCountUp(el, target, duration, prefix, suffix) {
+  prefix = prefix || '';
+  suffix = suffix || '';
+  const start = performance.now();
+  const from = 0;
+
+  function easeOutCubic(t) {
+    return 1 - Math.pow(1 - t, 3);
+  }
+
+  function tick(now) {
+    const elapsed = now - start;
+    const progress = Math.min(elapsed / duration, 1);
+    const value = from + (target - from) * easeOutCubic(progress);
+
+    if (suffix === 'B') {
+      el.textContent = prefix + value.toFixed(1) + suffix;
+    } else if (target > 100) {
+      el.textContent = prefix + Math.round(value).toLocaleString() + suffix;
+    } else {
+      el.textContent = prefix + Math.round(value) + suffix;
+    }
+
+    if (progress < 1) {
+      requestAnimationFrame(tick);
+    }
+  }
+
+  requestAnimationFrame(tick);
+}
+
 // ── KPIs ─────────────────────────────────────────────────────────────────────
 
-function updateKPIs(data) {
-  document.getElementById('kpi-total').textContent = data.length;
+let kpiAnimated = false;
 
-  const total = data.reduce((s, c) => s + (c.total_funding_usd_m || 0), 0);
-  document.getElementById('kpi-funding').textContent = total > 0 ? fmtMoney(total) : '—';
-
+function updateKPIs(data, animate) {
+  const total = data.length;
+  const funding = data.reduce((s, c) => s + (c.total_funding_usd_m || 0), 0);
   const fs = data.filter(c => c.category && (c.category.includes('Full-Stack') || c.category.includes('Autonomous'))).length;
-  document.getElementById('kpi-fullstack').textContent = fs;
-
   const years = data.map(c => c.founded).filter(Boolean).sort();
-  if (years.length) {
-    const mid = Math.floor(years.length / 2);
-    document.getElementById('kpi-median-year').textContent =
-      years.length % 2 ? years[mid] : Math.round((years[mid - 1] + years[mid]) / 2);
+  const median = years.length
+    ? (years.length % 2 ? years[Math.floor(years.length / 2)] : Math.round((years[Math.floor(years.length / 2) - 1] + years[Math.floor(years.length / 2)]) / 2))
+    : 0;
+
+  if (animate && !kpiAnimated) {
+    kpiAnimated = true;
+    animateCountUp(document.getElementById('kpi-total'), total, 1200, '', '');
+    animateCountUp(document.getElementById('kpi-funding'), funding / 1000, 1400, '$', 'B');
+    animateCountUp(document.getElementById('kpi-fullstack'), fs, 1000, '', '');
+    animateCountUp(document.getElementById('kpi-median-year'), median, 1600, '', '');
+  } else {
+    document.getElementById('kpi-total').textContent = total;
+    document.getElementById('kpi-funding').textContent = funding > 0 ? fmtMoney(funding) : '—';
+    document.getElementById('kpi-fullstack').textContent = fs;
+    document.getElementById('kpi-median-year').textContent = median || '—';
   }
 }
 
@@ -150,7 +192,6 @@ function showPopover(c, rect) {
   popover.style.top = top + 'px';
   popover.classList.remove('hidden');
 
-  // Small delay for opacity transition
   requestAnimationFrame(() => popover.classList.add('visible'));
 }
 
@@ -219,7 +260,7 @@ function applyFilters() {
     return true;
   });
 
-  updateKPIs(filtered);
+  updateKPIs(filtered, false);
   updateCharts(filtered);
   buildMap(filtered);
   renderTable(sortData(filtered));
@@ -239,9 +280,9 @@ document.getElementById('view-toggle').addEventListener('click', (e) => {
   document.getElementById('table-view').classList.toggle('hidden', view !== 'table');
 });
 
-// ── Charts ───────────────────────────────────────────────────────────────────
+// ── Chart.js (Stage + Region only) ──────────────────────────────────────────
 
-const CHART_COLORS = ['#6366f1', '#22d3ee', '#a78bfa', '#34d399', '#fbbf24', '#f87171', '#fb923c', '#38bdf8'];
+const CHART_COLORS = ['#6b8cce', '#4ecdc4', '#b8a0d6', '#e8a44a', '#d4a843', '#ff6b6b', '#95e1a3', '#6b7a96'];
 let chartInstances = {};
 
 function makeChart(id, type, labels, values, colors) {
@@ -249,7 +290,6 @@ function makeChart(id, type, labels, values, colors) {
   if (!ctx) return;
   if (chartInstances[id]) chartInstances[id].destroy();
 
-  const isHBar = type === 'bar' && id === 'chart-category';
   const isDoughnut = type === 'doughnut';
 
   chartInstances[id] = new Chart(ctx, {
@@ -259,32 +299,31 @@ function makeChart(id, type, labels, values, colors) {
       datasets: [{
         data: values,
         backgroundColor: colors || CHART_COLORS,
-        borderColor: '#0e0e0e',
+        borderColor: '#131a2e',
         borderWidth: 2,
       }]
     },
     options: {
-      indexAxis: isHBar ? 'y' : 'x',
       responsive: true,
       plugins: {
         legend: {
           display: isDoughnut,
           position: 'bottom',
-          labels: { color: '#777', font: { size: 10, family: 'Inter' }, boxWidth: 10, padding: 8 }
+          labels: { color: '#6b7a96', font: { size: 10, family: 'Inter' }, boxWidth: 10, padding: 8 }
         },
         tooltip: {
-          backgroundColor: '#161616',
-          borderColor: '#2a2a2a',
+          backgroundColor: '#1a2340',
+          borderColor: '#2e3a60',
           borderWidth: 1,
-          titleColor: '#f0f0f0',
-          bodyColor: '#bbb',
+          titleColor: '#e8ecf4',
+          bodyColor: '#b0bdd0',
           titleFont: { family: 'Inter', size: 11 },
           bodyFont: { family: 'Inter', size: 11 },
         }
       },
       scales: isDoughnut ? {} : {
-        x: { ticks: { color: '#555', font: { size: 9, family: 'Inter' } }, grid: { color: '#1a1a1a' }, beginAtZero: !isHBar },
-        y: { ticks: { color: '#555', font: { size: 9, family: 'Inter' } }, grid: { color: '#1a1a1a' }, beginAtZero: isHBar },
+        x: { ticks: { color: '#6b7a96', font: { size: 9, family: 'Inter' } }, grid: { color: '#1a2340' }, beginAtZero: true },
+        y: { ticks: { color: '#6b7a96', font: { size: 9, family: 'Inter' } }, grid: { color: '#1a2340' }, beginAtZero: true },
       }
     }
   });
@@ -297,21 +336,250 @@ function countBy(data, key) {
 }
 
 function updateCharts(data) {
-  const catCounts = countBy(data, 'category');
-  const catLabels = CATEGORIES.map(c => c.key).filter(k => catCounts[k]);
-  const catColors = catLabels.map(k => CAT_MAP[k].color);
-  makeChart('chart-category', 'bar', catLabels.map(k => k.replace('Full-Stack AI Scientist', 'Full-Stack').replace('DeSci / Open Science', 'DeSci')), catLabels.map(k => catCounts[k]), catColors);
-
   const stageCounts = countBy(data, 'stage');
   makeChart('chart-stage', 'doughnut', Object.keys(stageCounts), Object.values(stageCounts));
-
-  const domainCounts = {};
-  data.forEach(d => { (d.domain || []).forEach(v => { domainCounts[v] = (domainCounts[v] || 0) + 1; }); });
-  makeChart('chart-domain', 'bar', Object.keys(domainCounts), Object.values(domainCounts));
 
   const regionCounts = {};
   data.forEach(c => { const r = hqRegion(c.hq); regionCounts[r] = (regionCounts[r] || 0) + 1; });
   makeChart('chart-region', 'doughnut', Object.keys(regionCounts), Object.values(regionCounts));
+}
+
+// ── D3 Bubble Chart ─────────────────────────────────────────────────────────
+
+function renderBubbleChart(data) {
+  const container = document.getElementById('bubble-chart-container');
+  const svg = d3.select('#bubble-chart');
+  svg.selectAll('*').remove();
+
+  const width = container.clientWidth;
+  const height = 400;
+  svg.attr('viewBox', `0 0 ${width} ${height}`).attr('height', height);
+
+  // Create tooltip if not present
+  let tooltip = d3.select('.d3-tooltip');
+  if (tooltip.empty()) {
+    tooltip = d3.select('body').append('div').attr('class', 'd3-tooltip');
+  }
+
+  const funded = data.filter(c => c.total_funding_usd_m && c.total_funding_usd_m > 0);
+  if (!funded.length) return;
+
+  const radiusScale = d3.scaleSqrt()
+    .domain([0, d3.max(funded, d => d.total_funding_usd_m)])
+    .range([8, 55]);
+
+  const nodes = funded.map(d => ({
+    ...d,
+    r: radiusScale(d.total_funding_usd_m),
+    cat: CAT_MAP[d.category],
+  }));
+
+  const simulation = d3.forceSimulation(nodes)
+    .force('charge', d3.forceManyBody().strength(5))
+    .force('center', d3.forceCenter(width / 2, height / 2))
+    .force('collision', d3.forceCollide().radius(d => d.r + 2).strength(0.9))
+    .force('x', d3.forceX(d => {
+      const cats = CATEGORIES.map(c => c.key);
+      const idx = cats.indexOf(d.category);
+      return width * (idx + 1) / (cats.length + 1);
+    }).strength(0.15))
+    .force('y', d3.forceY(height / 2).strength(0.1))
+    .stop();
+
+  for (let i = 0; i < 200; i++) simulation.tick();
+
+  const g = svg.append('g');
+
+  const bubbles = g.selectAll('circle')
+    .data(nodes)
+    .enter()
+    .append('circle')
+    .attr('cx', d => d.x)
+    .attr('cy', d => d.y)
+    .attr('r', 0)
+    .attr('fill', d => d.cat ? d.cat.color : '#6b7a96')
+    .attr('fill-opacity', 0.25)
+    .attr('stroke', d => d.cat ? d.cat.color : '#6b7a96')
+    .attr('stroke-width', 1.5)
+    .attr('stroke-opacity', 0.6)
+    .style('cursor', 'pointer');
+
+  bubbles.transition()
+    .duration(800)
+    .delay((d, i) => i * 20)
+    .attr('r', d => d.r);
+
+  // Labels for larger bubbles
+  g.selectAll('text')
+    .data(nodes.filter(d => d.r > 22))
+    .enter()
+    .append('text')
+    .attr('x', d => d.x)
+    .attr('y', d => d.y)
+    .attr('text-anchor', 'middle')
+    .attr('dominant-baseline', 'middle')
+    .attr('fill', '#e8ecf4')
+    .attr('font-size', d => Math.min(d.r * 0.35, 11) + 'px')
+    .attr('font-family', 'Inter, sans-serif')
+    .attr('font-weight', '600')
+    .attr('pointer-events', 'none')
+    .text(d => d.name.length > 12 ? d.name.slice(0, 11) + '…' : d.name)
+    .attr('opacity', 0)
+    .transition()
+    .delay(800)
+    .duration(400)
+    .attr('opacity', 0.9);
+
+  bubbles
+    .on('mouseenter', function(event, d) {
+      d3.select(this).attr('fill-opacity', 0.45).attr('stroke-opacity', 1);
+      tooltip.html(`
+        <div class="tt-name" style="color:${d.cat ? d.cat.color : '#fff'}">${d.name}</div>
+        <div class="tt-detail">${d.category} · ${d.stage}</div>
+        <div class="tt-funding">${fmtMoney(d.total_funding_usd_m)}</div>
+      `);
+      tooltip.classed('visible', true);
+    })
+    .on('mousemove', function(event) {
+      tooltip.style('left', (event.clientX + 14) + 'px').style('top', (event.clientY - 10) + 'px');
+    })
+    .on('mouseleave', function() {
+      d3.select(this).attr('fill-opacity', 0.25).attr('stroke-opacity', 0.6);
+      tooltip.classed('visible', false);
+    })
+    .on('click', function(event, d) {
+      if (d.website) window.open(d.website, '_blank');
+    });
+
+  // Category legend at bottom
+  const legend = svg.append('g')
+    .attr('transform', `translate(${width / 2 - CATEGORIES.length * 65}, ${height - 20})`);
+
+  CATEGORIES.forEach((cat, i) => {
+    const lg = legend.append('g').attr('transform', `translate(${i * 130}, 0)`);
+    lg.append('circle').attr('r', 5).attr('fill', cat.color).attr('fill-opacity', 0.5);
+    lg.append('text')
+      .attr('x', 10).attr('y', 4)
+      .attr('fill', '#6b7a96')
+      .attr('font-size', '9px')
+      .attr('font-family', 'Inter, sans-serif')
+      .text(cat.label.replace('Full-Stack AI Scientist', 'Full-Stack').replace('DeSci / Open Science', 'DeSci'));
+  });
+}
+
+// ── D3 Scatter Plot ─────────────────────────────────────────────────────────
+
+function renderScatterPlot(data) {
+  const container = document.getElementById('scatter-chart-container');
+  const svg = d3.select('#scatter-chart');
+  svg.selectAll('*').remove();
+
+  const margin = { top: 20, right: 30, bottom: 40, left: 55 };
+  const width = container.clientWidth;
+  const height = 350;
+  const innerW = width - margin.left - margin.right;
+  const innerH = height - margin.top - margin.bottom;
+
+  svg.attr('viewBox', `0 0 ${width} ${height}`).attr('height', height);
+
+  let tooltip = d3.select('.d3-tooltip');
+  if (tooltip.empty()) {
+    tooltip = d3.select('body').append('div').attr('class', 'd3-tooltip');
+  }
+
+  const funded = data.filter(c => c.total_funding_usd_m && c.total_funding_usd_m > 0 && c.founded);
+  if (!funded.length) return;
+
+  const xScale = d3.scaleLinear()
+    .domain([d3.min(funded, d => d.founded) - 1, d3.max(funded, d => d.founded) + 1])
+    .range([0, innerW]);
+
+  const yScale = d3.scaleLog()
+    .domain([1, d3.max(funded, d => d.total_funding_usd_m) * 1.2])
+    .range([innerH, 0]);
+
+  const rScale = d3.scaleSqrt()
+    .domain([0, d3.max(funded, d => d.total_funding_usd_m)])
+    .range([4, 30]);
+
+  const g = svg.append('g').attr('transform', `translate(${margin.left},${margin.top})`);
+
+  // Grid
+  g.append('g')
+    .attr('transform', `translate(0,${innerH})`)
+    .call(d3.axisBottom(xScale).tickFormat(d3.format('d')).ticks(8))
+    .call(g => g.select('.domain').attr('stroke', '#253054'))
+    .call(g => g.selectAll('.tick line').attr('stroke', '#1a2340'))
+    .call(g => g.selectAll('.tick text').attr('fill', '#6b7a96').attr('font-size', '10px'));
+
+  g.append('g')
+    .call(d3.axisLeft(yScale).ticks(5, '$~s').tickFormat(d => {
+      if (d >= 1000) return '$' + (d / 1000) + 'B';
+      return '$' + d + 'M';
+    }))
+    .call(g => g.select('.domain').attr('stroke', '#253054'))
+    .call(g => g.selectAll('.tick line').attr('stroke', '#1a2340').clone().attr('x2', innerW).attr('stroke-opacity', 0.3))
+    .call(g => g.selectAll('.tick text').attr('fill', '#6b7a96').attr('font-size', '10px'));
+
+  // Axis labels
+  svg.append('text')
+    .attr('x', margin.left + innerW / 2)
+    .attr('y', height - 4)
+    .attr('text-anchor', 'middle')
+    .attr('fill', '#6b7a96')
+    .attr('font-size', '10px')
+    .attr('font-family', 'Inter, sans-serif')
+    .text('Founded Year');
+
+  svg.append('text')
+    .attr('transform', `translate(14,${margin.top + innerH / 2}) rotate(-90)`)
+    .attr('text-anchor', 'middle')
+    .attr('fill', '#6b7a96')
+    .attr('font-size', '10px')
+    .attr('font-family', 'Inter, sans-serif')
+    .text('Total Funding (log scale)');
+
+  // Dots
+  const dots = g.selectAll('circle')
+    .data(funded)
+    .enter()
+    .append('circle')
+    .attr('cx', d => xScale(d.founded))
+    .attr('cy', d => yScale(d.total_funding_usd_m))
+    .attr('r', 0)
+    .attr('fill', d => { const cat = CAT_MAP[d.category]; return cat ? cat.color : '#6b7a96'; })
+    .attr('fill-opacity', 0.35)
+    .attr('stroke', d => { const cat = CAT_MAP[d.category]; return cat ? cat.color : '#6b7a96'; })
+    .attr('stroke-width', 1.5)
+    .attr('stroke-opacity', 0.7)
+    .style('cursor', 'pointer');
+
+  dots.transition()
+    .duration(600)
+    .delay((d, i) => i * 25)
+    .attr('r', d => rScale(d.total_funding_usd_m));
+
+  dots
+    .on('mouseenter', function(event, d) {
+      d3.select(this).attr('fill-opacity', 0.6).attr('stroke-opacity', 1).attr('stroke-width', 2.5);
+      const cat = CAT_MAP[d.category];
+      tooltip.html(`
+        <div class="tt-name" style="color:${cat ? cat.color : '#fff'}">${d.name}</div>
+        <div class="tt-detail">${d.category} · Founded ${d.founded}</div>
+        <div class="tt-funding">${fmtMoney(d.total_funding_usd_m)}</div>
+      `);
+      tooltip.classed('visible', true);
+    })
+    .on('mousemove', function(event) {
+      tooltip.style('left', (event.clientX + 14) + 'px').style('top', (event.clientY - 10) + 'px');
+    })
+    .on('mouseleave', function() {
+      d3.select(this).attr('fill-opacity', 0.35).attr('stroke-opacity', 0.7).attr('stroke-width', 1.5);
+      tooltip.classed('visible', false);
+    })
+    .on('click', function(event, d) {
+      if (d.website) window.open(d.website, '_blank');
+    });
 }
 
 // ── Capability Matrix ────────────────────────────────────────────────────────
@@ -338,7 +606,7 @@ function renderCapMatrix(data) {
 
   data.forEach(c => {
     const cat = CAT_MAP[c.category];
-    html += `<tr><td style="color:${cat ? cat.color : '#bbb'}">${c.name}</td>`;
+    html += `<tr><td style="color:${cat ? cat.color : '#b0bdd0'}">${c.name}</td>`;
     CAPS.forEach(cap => {
       const has = c.capabilities && (c.capabilities.includes(cap) || (cap === 'Paper/Report writing' && c.capabilities.includes('Report generation')));
       html += `<td><span class="cap-dot ${has ? 'yes' : 'no'}">${has ? '&#10003;' : '&mdash;'}</span></td>`;
@@ -349,25 +617,30 @@ function renderCapMatrix(data) {
   t.innerHTML = html;
 }
 
-// ── Largest Rounds ───────────────────────────────────────────────────────────
+// ── Funding Bars (replaces card grid) ────────────────────────────────────────
 
 function renderRounds(data) {
   const rounds = data
     .filter(c => c.total_funding_usd_m)
     .sort((a, b) => b.total_funding_usd_m - a.total_funding_usd_m)
-    .slice(0, 6);
+    .slice(0, 8);
 
+  const maxFunding = rounds.length ? rounds[0].total_funding_usd_m : 1;
   const container = document.getElementById('rounds-list');
+
   container.innerHTML = rounds.map((c, i) => {
     const cat = CAT_MAP[c.category];
+    const color = cat ? cat.color : '#6b7a96';
+    const pct = (c.total_funding_usd_m / maxFunding * 100).toFixed(1);
     return `
-    <div class="round-card">
-      <div class="round-rank">${i + 1}</div>
-      <div class="round-info">
-        <div class="round-company" style="color:${cat ? cat.color : '#bbb'}">${c.name}</div>
-        <div class="round-meta">${c.stage} &bull; ${c.last_funding_date || '—'} &bull; ${(c.key_investors || []).slice(0, 2).join(', ')}</div>
+    <div class="funding-bar-row reveal">
+      <span class="funding-bar-rank">${i + 1}</span>
+      <span class="funding-bar-name" style="color:${color}">${c.name}</span>
+      <div class="funding-bar-track">
+        <div class="funding-bar-fill" style="background:${color}; opacity:0.3;" data-width="${pct}%"></div>
       </div>
-      <div class="round-amount">${fmtMoney(c.total_funding_usd_m)}</div>
+      <span class="funding-bar-amount">${fmtMoney(c.total_funding_usd_m)}</span>
+      <span class="funding-bar-meta">${c.stage} · ${(c.key_investors || []).slice(0, 1).join('')}</span>
     </div>`;
   }).join('');
 }
@@ -381,14 +654,14 @@ const MILESTONES = [
   { date: 'Mar 2025', text: '<strong>Lila Sciences</strong> unveiled by Flagship Pioneering with $200M seed' },
   { date: 'Mar 2025', text: 'First fully AI-generated research paper accepted at a major ML conference' },
   { date: 'Aug 2024', text: '<strong>Sakana AI</strong> publishes "The AI Scientist" — first automated paper generation system' },
-  { date: 'Aug 2024', text: '<strong>Recursion</strong> partners with NVIDIA on BioNeMo drug discovery platform' },
+  { date: 'Aug 2024', text: '<strong>Recursion</strong> acquires Exscientia for ~$688M; partners with NVIDIA on BioNeMo' },
   { date: 'Jan 2023', text: '<strong>FutureHouse</strong> founded by Eric Schmidt to build open-source AI research tools' },
 ];
 
 function renderMilestones() {
   const container = document.getElementById('milestones-list');
   container.innerHTML = MILESTONES.map(m => `
-    <div class="milestone">
+    <div class="milestone reveal">
       <div class="milestone-date">${m.date}</div>
       <div class="milestone-text">${m.text}</div>
     </div>
@@ -475,7 +748,7 @@ function openModal(c) {
   const content = document.getElementById('modal-content');
   const cat = CAT_MAP[c.category];
   content.innerHTML = `
-    <div class="modal-name"><a href="${c.website}" target="_blank" rel="noopener" style="color:${cat ? cat.color : '#bbb'}">${c.name} &#8599;</a></div>
+    <div class="modal-name"><a href="${c.website}" target="_blank" rel="noopener" style="color:${cat ? cat.color : '#b0bdd0'}">${c.name} &#8599;</a></div>
     <div class="modal-meta">${c.hq || ''} ${c.founded ? '&bull; Founded ' + c.founded : ''}</div>
     <div class="modal-tags">${catTag(c.category)} <span class="tag tag-other">${c.stage}</span></div>
 
@@ -523,6 +796,39 @@ document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') document.getElementById('modal-overlay').classList.add('hidden');
 });
 
+// ── Scroll Reveal (IntersectionObserver) ─────────────────────────────────────
+
+function initScrollReveal() {
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach((entry, idx) => {
+      if (entry.isIntersecting) {
+        // Stagger siblings
+        const parent = entry.target.parentElement;
+        const siblings = parent ? Array.from(parent.querySelectorAll('.reveal')) : [];
+        const sibIndex = siblings.indexOf(entry.target);
+        const delay = sibIndex >= 0 ? sibIndex * 80 : 0;
+
+        setTimeout(() => {
+          entry.target.classList.add('revealed');
+
+          // Animate funding bars when revealed
+          const bars = entry.target.querySelectorAll('.funding-bar-fill');
+          bars.forEach(bar => {
+            const w = bar.dataset.width;
+            if (w) {
+              requestAnimationFrame(() => { bar.style.width = w; });
+            }
+          });
+        }, delay);
+
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.1 });
+
+  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+}
+
 // ── Init ─────────────────────────────────────────────────────────────────────
 
 async function init() {
@@ -536,13 +842,24 @@ async function init() {
   filtered = [...allCompanies];
 
   buildDomainFilters(allCompanies);
-  updateKPIs(filtered);
+  updateKPIs(filtered, true);
   updateCharts(filtered);
   buildMap(filtered);
   renderCapMatrix(allCompanies);
   renderRounds(allCompanies);
   renderMilestones();
   renderTable(sortData(filtered));
+  renderBubbleChart(allCompanies);
+  renderScatterPlot(allCompanies);
+
+  // Init scroll reveal after everything is rendered
+  requestAnimationFrame(() => initScrollReveal());
+
+  // Resize D3 charts
+  window.addEventListener('resize', () => {
+    renderBubbleChart(allCompanies);
+    renderScatterPlot(allCompanies);
+  });
 }
 
 init();

@@ -6,8 +6,9 @@
   <title>AI Scientists Tracker</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -36,25 +37,22 @@
 
 <main>
 
-  <!-- ── KPI Strip ── -->
-  <section class="kpi-strip">
-    <div class="kpi">
-      <span class="kpi-val" id="kpi-total">&mdash;</span>
+  <!-- ── KPI Grid ── -->
+  <section class="kpi-grid reveal">
+    <div class="kpi-block" style="--kpi-accent: var(--accent)">
+      <span class="kpi-val" id="kpi-total" data-target="0">0</span>
       <span class="kpi-lbl">Platforms</span>
     </div>
-    <div class="kpi-sep"></div>
-    <div class="kpi">
-      <span class="kpi-val accent2" id="kpi-funding">&mdash;</span>
+    <div class="kpi-block" style="--kpi-accent: var(--accent2)">
+      <span class="kpi-val" id="kpi-funding" data-target="0" data-prefix="$" data-suffix="B">0</span>
       <span class="kpi-lbl">Disclosed Funding</span>
     </div>
-    <div class="kpi-sep"></div>
-    <div class="kpi">
-      <span class="kpi-val accent3" id="kpi-fullstack">&mdash;</span>
+    <div class="kpi-block" style="--kpi-accent: var(--accent3)">
+      <span class="kpi-val" id="kpi-fullstack" data-target="0">0</span>
       <span class="kpi-lbl">Full-Stack / Lab</span>
     </div>
-    <div class="kpi-sep"></div>
-    <div class="kpi">
-      <span class="kpi-val accent4" id="kpi-median-year">&mdash;</span>
+    <div class="kpi-block" style="--kpi-accent: var(--accent4)">
+      <span class="kpi-val" id="kpi-median-year" data-target="0">0</span>
       <span class="kpi-lbl">Median Founded</span>
     </div>
   </section>
@@ -67,7 +65,6 @@
 
   <!-- ── MAP VIEW ── -->
   <section class="map-view" id="map-view">
-    <!-- Stage column headers -->
     <div class="map-grid" id="map-grid">
       <!-- Built by JS -->
     </div>
@@ -97,19 +94,33 @@
     </div>
   </section>
 
-  <!-- ── Charts Row ── -->
-  <section class="charts-row">
-    <div class="chart-card">
-      <h3>By Category</h3>
-      <canvas id="chart-category"></canvas>
+  <!-- ── D3 Hero: Bubble Chart ── -->
+  <section class="section-block reveal">
+    <div class="section-hdr">
+      <h2>Funding Landscape</h2>
+      <p class="section-sub">Bubble size represents total disclosed funding. Color indicates category.</p>
     </div>
+    <div class="d3-container" id="bubble-chart-container">
+      <svg id="bubble-chart"></svg>
+    </div>
+  </section>
+
+  <!-- ── D3: Scatter Plot ── -->
+  <section class="section-block reveal">
+    <div class="section-hdr">
+      <h2>Market Timing &amp; Capital</h2>
+      <p class="section-sub">Founded year vs. total funding (log scale). Size reflects capital raised.</p>
+    </div>
+    <div class="d3-container" id="scatter-chart-container">
+      <svg id="scatter-chart"></svg>
+    </div>
+  </section>
+
+  <!-- ── Charts Row (Chart.js — Stage + Region only) ── -->
+  <section class="charts-row reveal">
     <div class="chart-card">
       <h3>By Funding Stage</h3>
       <canvas id="chart-stage"></canvas>
-    </div>
-    <div class="chart-card">
-      <h3>By Domain</h3>
-      <canvas id="chart-domain"></canvas>
     </div>
     <div class="chart-card">
       <h3>By Region</h3>
@@ -118,7 +129,7 @@
   </section>
 
   <!-- ── Capability Matrix ── -->
-  <section class="section-block">
+  <section class="section-block reveal">
     <div class="section-hdr">
       <h2>Research Lifecycle Coverage</h2>
       <p class="section-sub">Which companies cover which stages of autonomous research</p>
@@ -128,17 +139,17 @@
     </div>
   </section>
 
-  <!-- ── Largest Rounds ── -->
-  <section class="section-block">
+  <!-- ── Largest Rounds (Funding Bars) ── -->
+  <section class="section-block reveal">
     <div class="section-hdr">
       <h2>Largest Rounds</h2>
       <p class="section-sub">Top funding events in autonomous scientific AI</p>
     </div>
-    <div class="rounds-list" id="rounds-list"></div>
+    <div class="funding-bars" id="rounds-list"></div>
   </section>
 
   <!-- ── Key Milestones ── -->
-  <section class="section-block">
+  <section class="section-block reveal">
     <div class="section-hdr">
       <h2>Key Milestones</h2>
       <p class="section-sub">Landmark events in autonomous scientific research</p>
