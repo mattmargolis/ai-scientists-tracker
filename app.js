@@ -474,9 +474,9 @@ function renderScatterPlot(data) {
   const svg = d3.select('#scatter-chart');
   svg.selectAll('*').remove();
 
-  const margin = { top: 20, right: 30, bottom: 40, left: 55 };
+  const margin = { top: 24, right: 40, bottom: 48, left: 65 };
   const width = container.clientWidth;
-  const height = 350;
+  const height = 480;
   const innerW = width - margin.left - margin.right;
   const innerH = height - margin.top - margin.bottom;
 
@@ -490,41 +490,71 @@ function renderScatterPlot(data) {
   const funded = data.filter(c => c.total_funding_usd_m && c.total_funding_usd_m > 0 && c.founded);
   if (!funded.length) return;
 
+  const minFunding = d3.min(funded, d => d.total_funding_usd_m);
+  const maxFunding = d3.max(funded, d => d.total_funding_usd_m);
+
   const xScale = d3.scaleLinear()
     .domain([d3.min(funded, d => d.founded) - 1, d3.max(funded, d => d.founded) + 1])
     .range([0, innerW]);
 
   const yScale = d3.scaleLog()
-    .domain([1, d3.max(funded, d => d.total_funding_usd_m) * 1.2])
+    .domain([Math.max(1, minFunding * 0.6), maxFunding * 1.5])
     .range([innerH, 0]);
 
   const rScale = d3.scaleSqrt()
-    .domain([0, d3.max(funded, d => d.total_funding_usd_m)])
-    .range([4, 30]);
+    .domain([0, maxFunding])
+    .range([5, 24]);
+
+  // Pre-compute positions, then use force simulation to separate overlapping dots
+  const nodes = funded.map(d => ({
+    ...d,
+    x: xScale(d.founded),
+    y: yScale(d.total_funding_usd_m),
+    r: rScale(d.total_funding_usd_m),
+  }));
+
+  const sim = d3.forceSimulation(nodes)
+    .force('x', d3.forceX(d => xScale(d.founded)).strength(0.8))
+    .force('y', d3.forceY(d => yScale(d.total_funding_usd_m)).strength(0.8))
+    .force('collide', d3.forceCollide(d => d.r + 2).strength(0.7))
+    .stop();
+
+  for (let i = 0; i < 120; i++) sim.tick();
+
+  // Clamp to chart bounds
+  nodes.forEach(d => {
+    d.x = Math.max(d.r, Math.min(innerW - d.r, d.x));
+    d.y = Math.max(d.r, Math.min(innerH - d.r, d.y));
+  });
 
   const g = svg.append('g').attr('transform', `translate(${margin.left},${margin.top})`);
 
-  // Grid
+  // Grid lines
+  const yTicks = [3, 5, 10, 20, 50, 100, 200, 500, 1000, 1500];
+  const visibleYTicks = yTicks.filter(t => t >= minFunding * 0.6 && t <= maxFunding * 1.5);
+
   g.append('g')
     .attr('transform', `translate(0,${innerH})`)
-    .call(d3.axisBottom(xScale).tickFormat(d3.format('d')).ticks(8))
+    .call(d3.axisBottom(xScale).tickFormat(d3.format('d')).ticks(10))
     .call(g => g.select('.domain').attr('stroke', '#253054'))
     .call(g => g.selectAll('.tick line').attr('stroke', '#1a2340'))
     .call(g => g.selectAll('.tick text').attr('fill', '#6b7a96').attr('font-size', '10px'));
 
   g.append('g')
-    .call(d3.axisLeft(yScale).ticks(5, '$~s').tickFormat(d => {
-      if (d >= 1000) return '$' + (d / 1000) + 'B';
-      return '$' + d + 'M';
-    }))
+    .call(d3.axisLeft(yScale)
+      .tickValues(visibleYTicks)
+      .tickFormat(d => {
+        if (d >= 1000) return '$' + (d / 1000) + 'B';
+        return '$' + d + 'M';
+      }))
     .call(g => g.select('.domain').attr('stroke', '#253054'))
-    .call(g => g.selectAll('.tick line').attr('stroke', '#1a2340').clone().attr('x2', innerW).attr('stroke-opacity', 0.3))
+    .call(g => g.selectAll('.tick line').attr('stroke', '#1a2340').clone().attr('x2', innerW).attr('stroke-opacity', 0.2))
     .call(g => g.selectAll('.tick text').attr('fill', '#6b7a96').attr('font-size', '10px'));
 
   // Axis labels
   svg.append('text')
     .attr('x', margin.left + innerW / 2)
-    .attr('y', height - 4)
+    .attr('y', height - 6)
     .attr('text-anchor', 'middle')
     .attr('fill', '#6b7a96')
     .attr('font-size', '10px')
@@ -539,13 +569,13 @@ function renderScatterPlot(data) {
     .attr('font-family', 'Inter, sans-serif')
     .text('Total Funding (log scale)');
 
-  // Dots
+  // Dots (using force-separated positions)
   const dots = g.selectAll('circle')
-    .data(funded)
+    .data(nodes)
     .enter()
     .append('circle')
-    .attr('cx', d => xScale(d.founded))
-    .attr('cy', d => yScale(d.total_funding_usd_m))
+    .attr('cx', d => d.x)
+    .attr('cy', d => d.y)
     .attr('r', 0)
     .attr('fill', d => { const cat = CAT_MAP[d.category]; return cat ? cat.color : '#6b7a96'; })
     .attr('fill-opacity', 0.35)
@@ -553,6 +583,26 @@ function renderScatterPlot(data) {
     .attr('stroke-width', 1.5)
     .attr('stroke-opacity', 0.7)
     .style('cursor', 'pointer');
+
+  // Labels for dots large enough to read
+  g.selectAll('.scatter-label')
+    .data(nodes.filter(d => d.r >= 12))
+    .enter()
+    .append('text')
+    .attr('class', 'scatter-label')
+    .attr('x', d => d.x)
+    .attr('y', d => d.y + d.r + 12)
+    .attr('text-anchor', 'middle')
+    .attr('fill', '#b0bdd0')
+    .attr('font-size', '8.5px')
+    .attr('font-family', 'Inter, sans-serif')
+    .attr('pointer-events', 'none')
+    .text(d => d.name.length > 14 ? d.name.slice(0, 13) + '…' : d.name)
+    .attr('opacity', 0)
+    .transition()
+    .delay(700)
+    .duration(400)
+    .attr('opacity', 0.7);
 
   dots.transition()
     .duration(600)
