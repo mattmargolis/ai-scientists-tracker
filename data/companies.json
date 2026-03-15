@@ -598,5 +598,25 @@
     "parent_org": null,
     "notes": "$220M Series B led by a16z bio with NVIDIA participation. Proprietary tNOVA platform generates trillions of molecular measurements to train AI models for drug discovery.",
     "source": "https://terraytx.com"
+  },
+  {
+    "id": 32,
+    "name": "TrialMind (Keiji AI)",
+    "website": "https://www.trialmindapis.com",
+    "hq": "San Francisco, CA",
+    "founded": 2023,
+    "description": "Agentic AI platform for clinical research with 100+ proprietary MCP tools and 1M+ trial data points. Accelerates all 6 clinical research stages — from literature review and trial design to patient recruitment, data monitoring, and regulatory reporting.",
+    "category": "AI Research Agent",
+    "approach": "Agentic AI with 100+ proprietary tools for end-to-end clinical trial acceleration, built on foundational AI research for drug discovery and development",
+    "domain": ["Drug Discovery", "Biology"],
+    "capabilities": ["Literature synthesis", "Experiment design", "Data analysis", "Report generation"],
+    "stage": "Seed",
+    "total_funding_usd_m": null,
+    "last_funding_date": null,
+    "key_investors": [],
+    "founders": ["Keiji AI team"],
+    "parent_org": "Keiji AI",
+    "notes": "Deployed by leading pharma, biotech, and CROs. Multi-million-dollar ARR with 5x YoY growth. Enterprise security and compliance certifications for regulated healthcare environments.",
+    "source": "https://www.trialmindapis.com"
   }
 ]
